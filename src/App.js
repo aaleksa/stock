@@ -49,14 +49,11 @@ class App extends React.Component {
 
   standardDeviation() {
     let average = this.state.averageValue;
-    console.log('standardDeviation average', average)
     let sum = 0;
     let count = currentDataArray.length;
-    console.log('count', count)
     for (let i = 0; i < count; i++) {
       let difference = currentDataArray[i].value - average;
       let newItem = Math.pow(difference, 2);
-      console.log('newItem',newItem)
       sum += newItem;
     }
     let s = sum / (currentDataArray.length - 1);
@@ -65,28 +62,27 @@ class App extends React.Component {
   }
 
   calculationMod() {
-    // let  currentDataArrayValue =  currentDataArray.value;
-    console.log('currentDataArray', currentDataArray)
     let count = currentDataArray.length;
     let newArrayCoincidences = {};
 
     for (let i = 0; i < count; i++) {
       let currentItemValue = currentDataArray[i].value;
-      // console.log('currentItemValue',currentItemValue)
       if (newArrayCoincidences[currentItemValue] === undefined) {
         newArrayCoincidences[currentItemValue] = 1;
       } else {
         newArrayCoincidences[currentItemValue] = newArrayCoincidences[currentItemValue] + 1;
       }
     }
-    let parsedKeys = Object.keys(newArrayCoincidences).map(x => parseInt(x));
-    let sortedKeys = parsedKeys.sort(function(a, b) {
-      return b - a;
-    });
-    console.log('sortedKeys', sortedKeys)
-    let result = sortedKeys.slice(0, 10);
-    console.log('result', result)
-    this.setState({calculationModeValue: result[0]})
+
+    let list_value = [];
+    let result = Object.entries(newArrayCoincidences).sort((a,b)=>(b[1]-a[1]));
+    result = result.filter(current => {
+      if(current[1] === result[0][1]) {
+        list_value.push(current[0]);
+        return current;
+      }
+    })
+    this.setState({calculationModeValue: list_value[0]})
   }
 
 
@@ -116,7 +112,7 @@ class App extends React.Component {
           <div>{this.state.standardDeviationValue}</div>
         </div>
         <div className={'standard-deviation-value'}>
-          <span>Стандартное отклонение</span>
+          <span> Мода </span>
           <div>{this.state.calculationModeValue}</div>
         </div>
 
