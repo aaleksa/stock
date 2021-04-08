@@ -4,7 +4,7 @@ import React from 'react';
 let socket = {};
 let loadValues = [];
 let currentDataArray = [];
-
+let latency = 0;
 const oddOrEven = (count) => {
   let res = (count & 1) ? "odd" : "even";
   return res;
@@ -18,7 +18,8 @@ class App extends React.Component {
       standardDeviationValue: 0,
       calculationModeValue: 0,
       calculationMedianValue: 0,
-
+      startMoment: Date.now(),
+      endMoment: 0,
     }
     this.startLink = this.startLink.bind(this);
     this.startStatistics = this.startStatistics.bind(this);
@@ -26,15 +27,30 @@ class App extends React.Component {
     this.standardDeviation = this.standardDeviation.bind(this);
     this.calculationMod = this.calculationMod.bind(this);
     this.calculationMedian = this.calculationMedian.bind(this);
+    this.visibilityText = this.visibilityText.bind(this);
   }
 
-  startLink() {
+  startLink(event) {
+    event.target.classList.add('active-button');
     socket = new WebSocket("wss://trade.trademux.net:8800/?password=1234");
+
     socket.onmessage = ({data}) => {
+      this.setState({endMoment: Date.now()});
+      if (latency === 0) {
+        latency = this.state.endMoment - this.state.startMoment;
+        setTimeout(this.visibilityText, 1);
+      }
       data = JSON.parse(data);
       loadValues.push(data);
     }
+
   }
+
+  visibilityText() {
+    let element = document.getElementsByClassName('text-info');
+    element[0].classList.add('text-info-visibility')
+  }
+
 
   startStatistics() {
     currentDataArray = loadValues;
@@ -45,75 +61,99 @@ class App extends React.Component {
   }
 
   averageCalculation() {
-    let sum = 0;
-    let count = currentDataArray.length;
-    for (let i = 0; i < count; i++) {
-      sum += currentDataArray[i].value;
+    if(currentDataArray.length > 0){
+      let sum = 0;
+      let count = currentDataArray.length;
+      for (let i = 0; i < count; i++) {
+        sum += currentDataArray[i].value;
+      }
+      let result = sum / count;
+      this.setState({averageValue: result});
+      return result;
+    }else {
+      this.setState({averageValue: 'Нет данных'});
     }
-    let result = sum / count
-    this.setState({averageValue: result});
+
   }
 
   standardDeviation() {
-    let average = this.state.averageValue;
-    let sum = 0;
-    let count = currentDataArray.length;
-    for (let i = 0; i < count; i++) {
-      let difference = currentDataArray[i].value - average;
-      let newItem = Math.pow(difference, 2);
-      sum += newItem;
+    if(currentDataArray.length > 0 ){
+      let average =  this.averageCalculation();
+      let sum = 0;
+      let count = currentDataArray.length;
+      for (let i = 0; i < count; i++) {
+        let difference = currentDataArray[i].value - average;
+        let newItem = Math.pow(difference, 2);
+        sum += newItem;
+      }
+      let s = sum / (currentDataArray.length - 1);
+      let result = Math.sqrt(s)
+      this.setState({standardDeviationValue: result});
+    }else {
+      this.setState({standardDeviationValue: 'Нет данных'});
+
     }
-    let s = sum / (currentDataArray.length - 1);
-    let result = Math.sqrt(s)
-    this.setState({standardDeviationValue: result});
+
   }
 
   calculationMod() {
-    let count = currentDataArray.length;
-    let newArrayCoincidences = {};
+    if (currentDataArray.length > 0){
+      let count = currentDataArray.length;
+      let newArrayCoincidences = {};
 
-    for (let i = 0; i < count; i++) {
-      let currentItemValue = currentDataArray[i].value;
-      if (newArrayCoincidences[currentItemValue] === undefined) {
-        newArrayCoincidences[currentItemValue] = 1;
-      } else {
-        newArrayCoincidences[currentItemValue] = newArrayCoincidences[currentItemValue] + 1;
+      for (let i = 0; i < count; i++) {
+        let currentItemValue = currentDataArray[i].value;
+        if (newArrayCoincidences[currentItemValue] === undefined) {
+          newArrayCoincidences[currentItemValue] = 1;
+        } else {
+          newArrayCoincidences[currentItemValue] = newArrayCoincidences[currentItemValue] + 1;
+        }
       }
+
+      let list_value = [];
+      let result = Object.entries(newArrayCoincidences).sort((a, b) => (b[1] - a[1]));
+      result = result.filter(current => {
+        if (current[1] === result[0][1]) {
+          list_value.push(current[0]);
+          return current;
+        }
+      })
+      this.setState({calculationModeValue: list_value[0]})
+    }else {
+      this.setState({calculationModeValue: 'Нет данных'})
+
     }
 
-    let list_value = [];
-    let result = Object.entries(newArrayCoincidences).sort((a, b) => (b[1] - a[1]));
-    result = result.filter(current => {
-      if (current[1] === result[0][1]) {
-        list_value.push(current[0]);
-        return current;
-      }
-    })
-    this.setState({calculationModeValue: list_value[0]})
   }
 
   calculationMedian() {
-    let sortCurrentDataArray = currentDataArray;
-    let result = 0;
-    sortCurrentDataArray.sort(function(a, b) {
-      if (a.value > b.value) {
-        return 1;
+    if (currentDataArray.length > 0){
+      let sortCurrentDataArray = currentDataArray;
+      let result = 0;
+      sortCurrentDataArray.sort(function(a, b) {
+        if (a.value > b.value) {
+          return 1;
+        }
+        if (a.value < b.value) {
+          return -1;
+        }
+        return 0;
+      });
+      let count = sortCurrentDataArray.length;
+      const isOdOrEven = oddOrEven(count);
+      if (isOdOrEven === 'odd') {
+        let number = Math.floor(count / 2);
+        result = sortCurrentDataArray[number].value;
+      } else {
+        let number = count / 2;
+        result = (sortCurrentDataArray[number - 1].value + sortCurrentDataArray[number].value) / 2;
       }
-      if (a.value < b.value) {
-        return -1;
-      }
-      return 0;
-    });
-    let count = sortCurrentDataArray.length;
-    const isOdOrEven = oddOrEven(count);
-    if (isOdOrEven === 'odd') {
-      let number = Math.floor(count / 2);
-      result = sortCurrentDataArray[number].value;
-    } else {
-      let number = count / 2;
-      result = (sortCurrentDataArray[number-1].value + sortCurrentDataArray[number].value) / 2;
+      this.setState({calculationMedianValue: result});
+    }else {
+      this.setState({calculationMedianValue: 'Нет данных'});
+
     }
-    this.setState({calculationMedianValue: result});
+
   }
 
   render() {
@@ -126,6 +166,9 @@ class App extends React.Component {
           <button className={'button'} onClick={this.startLink}>
             <span className={'text-button'}>Старт</span>
           </button>
+          <div className={'text-info'}>
+            <span>Соединение установлено</span>
+          </div>
         </div>
         <div className={'button-group'}>
           <button className={'button'} onClick={this.startStatistics}>
@@ -133,19 +176,19 @@ class App extends React.Component {
           </button>
         </div>
 
-        <div className={'average-value'}>
+        <div className={'div-value average-value'}>
           <span>Средне статистическое значение</span>
           <div>{this.state.averageValue}</div>
         </div>
-        <div className={'standard-deviation-value'}>
+        <div className={'div-value standard-deviation-value'}>
           <span>Стандартное отклонение</span>
           <div>{this.state.standardDeviationValue}</div>
         </div>
-        <div className={'standard-deviation-value'}>
+        <div className={' div-value standard-deviation-value'}>
           <span> Мода </span>
           <div>{this.state.calculationModeValue}</div>
         </div>
-        <div className={'standard-deviation-value'}>
+        <div className={'div-value standard-deviation-value'}>
           <span> Медиана </span>
           <div>{this.state.calculationMedianValue}</div>
         </div>

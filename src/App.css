@@ -12,12 +12,28 @@
   margin: 30px;
   padding-top: 30px;
 }
+.text-info {
+  display: none;
+
+}
+.text-info-visibility {
+  display: block;
+}
 .button {
   background-color: cornflowerblue;
   min-width: 200px;
   padding: 15px;
+  margin: 30px;
+}
+.active-button {
+  background-color: darkblue;
+
 }
 .text-button {
+  font-size: 20px;
   color: white;
+}
+.div-value {
+  margin-top: 20px;
 }
 
