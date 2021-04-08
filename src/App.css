@@ -1,12 +1,12 @@
 .app {
-  background-color: #282c34;
+  background-color: white;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   text-align: center;
   justify-content: start;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: black;
 }
 .header {
   margin: 30px;
@@ -35,5 +35,21 @@
 }
 .div-value {
   margin-top: 20px;
+}
+
+.container-address {
+  /*min-width: 300px;*/
+}
+.input-address {
+  border: 1px solid black;
+  min-width: 300px;
+  padding: 10px;
+}
+.input-address:hover {
+  background-color: grey;
+  color: black;
+}
+.input-address:active {
+  background-color: yellow;
 }
 

@@ -20,6 +20,9 @@ class App extends React.Component {
       calculationMedianValue: 0,
       startMoment: Date.now(),
       endMoment: 0,
+      value: '',
+      timeResponse: 0,
+      isResponseFailed: false,
     }
     this.startLink = this.startLink.bind(this);
     this.startStatistics = this.startStatistics.bind(this);
@@ -28,6 +31,9 @@ class App extends React.Component {
     this.calculationMod = this.calculationMod.bind(this);
     this.calculationMedian = this.calculationMedian.bind(this);
     this.visibilityText = this.visibilityText.bind(this);
+    this.executePing = this.executePing.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+
   }
 
   startLink(event) {
@@ -61,7 +67,7 @@ class App extends React.Component {
   }
 
   averageCalculation() {
-    if(currentDataArray.length > 0){
+    if (currentDataArray.length > 0) {
       let sum = 0;
       let count = currentDataArray.length;
       for (let i = 0; i < count; i++) {
@@ -70,15 +76,15 @@ class App extends React.Component {
       let result = sum / count;
       this.setState({averageValue: result});
       return result;
-    }else {
+    } else {
       this.setState({averageValue: 'Нет данных'});
     }
 
   }
 
   standardDeviation() {
-    if(currentDataArray.length > 0 ){
-      let average =  this.averageCalculation();
+    if (currentDataArray.length > 0) {
+      let average = this.averageCalculation();
       let sum = 0;
       let count = currentDataArray.length;
       for (let i = 0; i < count; i++) {
@@ -89,7 +95,7 @@ class App extends React.Component {
       let s = sum / (currentDataArray.length - 1);
       let result = Math.sqrt(s)
       this.setState({standardDeviationValue: result});
-    }else {
+    } else {
       this.setState({standardDeviationValue: 'Нет данных'});
 
     }
@@ -97,7 +103,7 @@ class App extends React.Component {
   }
 
   calculationMod() {
-    if (currentDataArray.length > 0){
+    if (currentDataArray.length > 0) {
       let count = currentDataArray.length;
       let newArrayCoincidences = {};
 
@@ -119,7 +125,7 @@ class App extends React.Component {
         }
       })
       this.setState({calculationModeValue: list_value[0]})
-    }else {
+    } else {
       this.setState({calculationModeValue: 'Нет данных'})
 
     }
@@ -127,7 +133,7 @@ class App extends React.Component {
   }
 
   calculationMedian() {
-    if (currentDataArray.length > 0){
+    if (currentDataArray.length > 0) {
       let sortCurrentDataArray = currentDataArray;
       let result = 0;
       sortCurrentDataArray.sort(function(a, b) {
@@ -149,11 +155,31 @@ class App extends React.Component {
         result = (sortCurrentDataArray[number - 1].value + sortCurrentDataArray[number].value) / 2;
       }
       this.setState({calculationMedianValue: result});
-    }else {
+    } else {
       this.setState({calculationMedianValue: 'Нет данных'});
 
     }
 
+  }
+
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  }
+
+  async executePing() {
+    let url = this.state.value;
+    console.log('url', url);
+    const startMoment = Date.now();
+    let endMoment;
+    try {
+      let response = await fetch(`https://${url}`);
+      endMoment = Date.now();
+      this.setState({timeResponse: endMoment - startMoment, isResponseFailed: false});
+      console.log('executePing', this.state.timeResponse)
+    } catch (error) {
+      console.log('executePing', 'no response');
+      this.setState({timeResponse: 0, isResponseFailed: true});
+    }
   }
 
   render() {
@@ -191,6 +217,21 @@ class App extends React.Component {
         <div className={'div-value standard-deviation-value'}>
           <span> Медиана </span>
           <div>{this.state.calculationMedianValue}</div>
+        </div>
+
+        <div>
+          <h2>Пингователь</h2>
+          <div className={'container-address'}>
+            <input placeholder={'ВВедите адрес сервера'}
+                   className={'input-address'}
+                   value={this.state.value}
+                   onChange={this.handleChange}/>
+          </div>
+          <input type="submit" value="Отправить" onClick={this.executePing}/>
+          <div>
+            Время запроса:
+            {this.state.isResponseFailed ? 'Запрос недостиг сервера' : ' ' + this.state.timeResponse}
+          </div>
         </div>
 
       </div>
