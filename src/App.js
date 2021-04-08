@@ -5,6 +5,11 @@ let socket = {};
 let loadValues = [];
 let currentDataArray = [];
 
+const oddOrEven = (count) => {
+  let res = (count & 1) ? "odd" : "even";
+  return res;
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -12,13 +17,15 @@ class App extends React.Component {
       averageValue: 0,
       standardDeviationValue: 0,
       calculationModeValue: 0,
+      calculationMedianValue: 0,
 
     }
     this.startLink = this.startLink.bind(this);
     this.startStatistics = this.startStatistics.bind(this);
     this.averageCalculation = this.averageCalculation.bind(this);
     this.standardDeviation = this.standardDeviation.bind(this);
-    this.calculationMod = this.calculationMod.bind(this)
+    this.calculationMod = this.calculationMod.bind(this);
+    this.calculationMedian = this.calculationMedian.bind(this);
   }
 
   startLink() {
@@ -33,7 +40,8 @@ class App extends React.Component {
     currentDataArray = loadValues;
     this.averageCalculation();
     this.standardDeviation();
-    this.calculationMod()
+    this.calculationMod();
+    this.calculationMedian();
   }
 
   averageCalculation() {
@@ -44,7 +52,6 @@ class App extends React.Component {
     }
     let result = sum / count
     this.setState({averageValue: result});
-    console.log('averageCalculation averageValue', this.state.averageValue)
   }
 
   standardDeviation() {
@@ -75,9 +82,9 @@ class App extends React.Component {
     }
 
     let list_value = [];
-    let result = Object.entries(newArrayCoincidences).sort((a,b)=>(b[1]-a[1]));
+    let result = Object.entries(newArrayCoincidences).sort((a, b) => (b[1] - a[1]));
     result = result.filter(current => {
-      if(current[1] === result[0][1]) {
+      if (current[1] === result[0][1]) {
         list_value.push(current[0]);
         return current;
       }
@@ -85,6 +92,29 @@ class App extends React.Component {
     this.setState({calculationModeValue: list_value[0]})
   }
 
+  calculationMedian() {
+    let sortCurrentDataArray = currentDataArray;
+    let result = 0;
+    sortCurrentDataArray.sort(function(a, b) {
+      if (a.value > b.value) {
+        return 1;
+      }
+      if (a.value < b.value) {
+        return -1;
+      }
+      return 0;
+    });
+    let count = sortCurrentDataArray.length;
+    const isOdOrEven = oddOrEven(count);
+    if (isOdOrEven === 'odd') {
+      let number = Math.floor(count / 2);
+      result = sortCurrentDataArray[number].value;
+    } else {
+      let number = count / 2;
+      result = (sortCurrentDataArray[number-1].value + sortCurrentDataArray[number].value) / 2;
+    }
+    this.setState({calculationMedianValue: result});
+  }
 
   render() {
     return (
@@ -114,6 +144,10 @@ class App extends React.Component {
         <div className={'standard-deviation-value'}>
           <span> Мода </span>
           <div>{this.state.calculationModeValue}</div>
+        </div>
+        <div className={'standard-deviation-value'}>
+          <span> Медиана </span>
+          <div>{this.state.calculationMedianValue}</div>
         </div>
 
       </div>
